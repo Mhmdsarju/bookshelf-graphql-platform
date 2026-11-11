@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BookGenre {
+  FICTION
+  SELF_HELP
+  PROGRAMMING
+  FINANCE
+  SCIENCE
+  HISTORY
+  OTHER
+}
+
+enum BookStatus {
+  WANT_TO_READ
+  READING
+  COMPLETED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  books        Book[]
+  reviews      Review[]
+}
+
+model Book {
+  id            String     @id @default(cuid())
+  title         String
+  author        String
+  description   String?
+  genre         BookGenre
+  publishedYear Int
+  available     Boolean    @default(true)
+  status        BookStatus @default(WANT_TO_READ)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  ownerId       String
+  owner         User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  reviews       Review[]
+
+  @@index([ownerId])
+  @@index([genre])
+  @@index([title])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  bookId    String
+  userId    String
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([bookId, userId])
+  @@index([bookId])
+}
